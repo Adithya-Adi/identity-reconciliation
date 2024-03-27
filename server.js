@@ -4,8 +4,14 @@ import helmet from 'helmet';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-//database connection
+// Database connection
 import { connectToDatabase } from './config/dbConfig.js';
+
+// Middleware imports
+import { errorHandler } from './middleware/errorHandler.js';
+
+// Routes imports
+import contactRoutes from './routes/contactRoutes.js';
 
 dotenv.config();
 
@@ -22,12 +28,11 @@ app.use(cors());
 app.get('/', (req, res) => {
   res.send('Bitespeed Backend Task: Identity Reconciliation!');
 });
+app.use('/identify', contactRoutes);
+
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
-});
+app.use(errorHandler);
 
 // Server
 const PORT = process.env.PORT || 8080;

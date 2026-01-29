@@ -1,4 +1,4 @@
-import { identifyContact } from "../services/contactServices.js";
+import { getIdentifyContact, identifyContact } from "../services/contactServices.js";
 
 const identifyContactController = async (req, res, next) => {
   try {
@@ -10,4 +10,19 @@ const identifyContactController = async (req, res, next) => {
   }
 }
 
-export { identifyContactController };
+const getIdentifyContactController = async (req, res, next) => {
+  try {
+    const { email, phoneNumber } = req.query;
+    const response = await getIdentifyContact(email || null, phoneNumber || null);
+
+    if (response.status === 404) {
+      return res.status(404).send({ message: response.message });
+    }
+
+    return res.status(response.status).send({ contact: response.contact });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { identifyContactController, getIdentifyContactController };

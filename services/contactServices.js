@@ -138,5 +138,43 @@ const getAllContactDetailsFromPrimaryContactId = async (primaryContactId) => {
   };
 }
 
+const getIdentifyContact = async (email, phoneNumber) => {
+  if (!email && !phoneNumber) {
+    throw {
+      status: 400,
+      message: 'email or phoneNumber is required',
+    };
+  }
 
-export { identifyContact };
+  try {
+    const searchContactQuery = `
+      SELECT * 
+      FROM contact 
+      WHERE (email = $1 OR phone_number = $2)
+      ORDER BY created_at
+    `;
+    const values = [email, phoneNumber];
+    const searchContact = await pool.query(searchContactQuery, values);
+
+    if (!searchContact.rows.length) {
+      throw {
+        status: 404,
+        message: 'Contact not found',
+      };
+    }
+
+    const firstMatch = searchContact.rows[0];
+    const primaryContactId =
+      firstMatch.link_precedence === 'primary' ? firstMatch.id : firstMatch.linked_id;
+
+    const contactDetails = await getAllContactDetailsFromPrimaryContactId(primaryContactId);
+    return contactDetails;
+  } catch (error) {
+    throw {
+      status: error.status || 500,
+      message: error.message || 'Internal server error',
+    };
+  }
+}
+
+export { identifyContact, getIdentifyContact };

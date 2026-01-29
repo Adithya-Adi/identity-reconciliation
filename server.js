@@ -26,7 +26,7 @@ app.use(cors());
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('Bitespeed Backend Task: Identity Reconciliation!');
+  res.send('Welcome to codemancers');
 });
 app.use('/identify', contactRoutes);
 

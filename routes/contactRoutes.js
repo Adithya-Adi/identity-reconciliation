@@ -1,8 +1,12 @@
 import express from 'express';
-import { identifyContactController } from '../controllers/contactController.js';
+import {
+  identifyContactController,
+  getIdentifyContactController,
+} from '../controllers/contactController.js';
 
 const router = express.Router();
 
+router.get('/', getIdentifyContactController);
 router.post('/', identifyContactController);
 
 export default router;

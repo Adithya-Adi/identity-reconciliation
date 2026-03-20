@@ -109,6 +109,55 @@ const identifyContact = async (email, phoneNumber) => {
 }
 
 
+const lookupIdentifiedContact = async (email, phoneNumber) => {
+  const normalizedEmail =
+    email != null && String(email).trim() !== '' ? String(email).trim() : null;
+  const normalizedPhone =
+    phoneNumber != null && String(phoneNumber).trim() !== ''
+      ? String(phoneNumber).trim()
+      : null;
+
+  if (!normalizedEmail && !normalizedPhone) {
+    return {
+      status: 400,
+      message: 'Provide at least one of email or phoneNumber query parameters',
+    };
+  }
+
+  const searchContactQuery = `
+    SELECT * 
+    FROM contact 
+    WHERE ($1::text IS NOT NULL AND email = $1)
+       OR ($2::text IS NOT NULL AND phone_number = $2)
+    ORDER BY created_at
+  `;
+  const searchContact = await pool.query(searchContactQuery, [
+    normalizedEmail,
+    normalizedPhone,
+  ]);
+
+  if (searchContact.rows.length === 0) {
+    return { status: 404, message: 'No contact matches the given identifiers' };
+  }
+
+  const primaryIds = new Set(
+    searchContact.rows.map((row) =>
+      row.link_precedence === 'primary' ? row.id : row.linked_id
+    )
+  );
+
+  if (primaryIds.size > 1) {
+    return {
+      status: 409,
+      message:
+        'Multiple distinct primary identities match; use POST /identify to reconcile',
+    };
+  }
+
+  const [primaryId] = primaryIds;
+  return getAllContactDetailsFromPrimaryContactId(primaryId);
+};
+
 const getAllContactDetailsFromPrimaryContactId = async (primaryContactId) => {
   const allContactsQuery = `
     SELECT * 
@@ -139,4 +188,4 @@ const getAllContactDetailsFromPrimaryContactId = async (primaryContactId) => {
 }
 
 
-export { identifyContact };
+export { identifyContact, lookupIdentifiedContact };
